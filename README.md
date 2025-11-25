@@ -58,10 +58,14 @@ For more details, please refer to the Wiki.
 
 ## Current Version
 
-This release (1.3.0.0) was released alongside AxIS 3.12.4.5 and is the
+This release (1.4.0.0) was released alongside AxIS 4.1.1.1 and is the
 most current version.
 
 ## Changelog
+
+### [1.4.0.0] - 2024-12-20
+
+- Added MEA Creator Kit Support
 
 ### [1.3.0.0] - 2024-12-20
 

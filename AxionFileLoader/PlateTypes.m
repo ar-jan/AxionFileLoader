@@ -1,5 +1,5 @@
 %{
-    Copyright (c) 2024 Axion BioSystems, Inc.
+    Copyright (c) 2025 Axion BioSystems, Inc.
     Contact: support@axion-biosystems.com
     All Rights Reserved
 %}
@@ -125,6 +125,21 @@ classdef PlateTypes
         
         % CytoView MEA 12-well Transparent
         TwelveWellTransparent = uint32(hex2dec('3000016'));
+
+        % Empty socket
+        CreatorKitChipEmpty = uint32(0);
+
+        % Smart chip 
+        CreatorKitChipSmart = uint32(1);
+
+        % 3DMap chip
+        CreatorKitChip3DMap = uint32(2);
+
+        % Shpero-HD chip
+        CreatorKitChipSpheroHD = uint32(3);
+
+        % Custom chip
+        CreatorKitChipCustom = uint32(4);
     end
 
     properties (Constant, Access=private)
@@ -132,12 +147,23 @@ classdef PlateTypes
         MUSE_MASK    = uint32(hex2dec('0400000'));
         MAESTRO_MASK = uint32(hex2dec('3000000'));
         EDGE_MASK    = uint32(hex2dec('1800000'));
-        CREATOR_MASK    = uint32(hex2dec('0800000'));
+        CREATOR_MASK = uint32(hex2dec('0800000'));
+
+        PLATE_ID_MASK = uint32(hex2dec('0000003F'));
+        
+        % Chimera (CreatorKit properties)
+        CHIP_MASK        = uint32(hex2dec('0000001F')); %5-bit mask
+        LEFT_CHIP_SHIFT  = 11;
+        RIGHT_CHIP_SHIFT = 6;
+        LEFT_CHIP_MASK   = bitshift(PlateTypes.CHIP_MASK, PlateTypes.LEFT_CHIP_SHIFT);
+        RIGHT_CHIP_MASK  = bitshift(PlateTypes.CHIP_MASK, PlateTypes.RIGHT_CHIP_SHIFT);
 
         MuseElectrodeMap = [ 1, 1, 8, 8;       ... % LinearSingleWell64
                              1, 1, 8, 8];          % P200D30S
                          
-        CreatorElectrodeMap = [ 1, 2, 8, 8];    ... % MEA Creator Kit "2-well"
+        CreatorElectrodeMap = [ 1, 2, 8, 8;    ... % MEA Creator Kit "2-well"
+                                1, 2, 9, 9;    ... % Sarlacc
+                                2, 4, 6, 4];   ... % Valley
 
         EdgeElectrodeMap = [ 2, 3, 8, 8;       ... %LinearSixWell
                              4, 6, 4, 4;       ... %TwentyFourWell
@@ -178,33 +204,89 @@ classdef PlateTypes
                                 
     end
 
+    methods(Static, Access={?DataSet})
+        function fIsChimera = IsChimera(aPlateType)
+            fIsChimera = bitand(aPlateType, PlateTypes.CREATOR_MASK) == PlateTypes.CREATOR_MASK;
+        end
+        
+        function fChipId = ChimeraGetLeftChip(aPlateType)
+            fChipId = bitand(bitshift(aPlateType, -PlateTypes.LEFT_CHIP_SHIFT), PlateTypes.CHIP_MASK);
+        end
+        
+        function fChipId = ChimeraGetRightChip(aPlateType)
+            fChipId = bitand(bitshift(aPlateType, -PlateTypes.RIGHT_CHIP_SHIFT), PlateTypes.CHIP_MASK);
+        end
+
+        function fChipId = ChimeraGetChipType(aPlateType)
+            chips = [PlateTypes.ChimeraGetLeftChip(aPlateType), PlateTypes.ChimeraGetRightChip(aPlateType)];
+               
+            if (all(chips == PlateTypes.CreatorKitChipEmpty))
+                % nothing is installed
+                fChipId = PlateTypes.CreatorKitChipEmpty;
+            else
+                nonSmartSockets = find(chips > PlateTypes.CreatorKitChipSmart);
+                    
+                if (isempty(nonSmartSockets))
+                    fChipId = PlateTypes.CreatorKitChipSmart;
+                else
+                    % If two chips are installed, use ID of the chip in the left socket
+                    % don't support mixing different chip types
+                    fChipId = chips(nonSmartSockets(1));
+                end 
+            end 
+
+        end
+
+        function offset = GetChipOffsetForChimera(aPlateType)
+            % GetChipOffsetForChimera returns offset in CreatorElectrodeMap
+            % for the specific CreatorKit (Chimera) configuration
+            fChipId = PlateTypes.ChimeraGetChipType(aPlateType);
+
+            switch fChipId
+                case {PlateTypes.CreatorKitChipEmpty, PlateTypes.CreatorKitChipSmart, PlateTypes.CreatorKitChipCustom}
+                    offset = 1;
+
+                case PlateTypes.CreatorKitChip3DMap
+                    offset = 2;
+
+                case PlateTypes.CreatorKitChipSpheroHD
+                    offset = 3;
+
+                otherwise
+                    warning('Unknown CreatorKit chip type. These Matlab Scripts may be out of date.');
+                    offset = 1; % fallback to Smart/Empty
+            end
+        end
+    end
+
     methods(Static)
-        function fPlateDimentions = GetWellDimensions(aPlateType)
+        function fPlateDimensions = GetWellDimensions(aPlateType)
             % GetWellDimensions returns a 2-element array of plate
             % dimensions.
             %
             % First element is the number of well rows, second element
             % is the number of well columns.
             %
-            PlateIDMask = 65535;
-            offset = bitand(aPlateType, PlateIDMask);
+            offset = bitand(aPlateType, PlateTypes.PLATE_ID_MASK);
             if(aPlateType == PlateTypes.Empty)
-                fPlateDimentions = [];
+                fPlateDimensions = [];
             elseif (bitand(aPlateType, PlateTypes.MUSE_MASK) == PlateTypes.MUSE_MASK)
-               fPlateDimentions = PlateTypes.MuseElectrodeMap(offset + 1, (1:2));
+               fPlateDimensions = PlateTypes.MuseElectrodeMap(offset + 1, (1:2));
             elseif (bitand(aPlateType, PlateTypes.MAESTRO_MASK) == PlateTypes.MAESTRO_MASK)
-               fPlateDimentions = PlateTypes.MaestroElectrodeMap(offset + 1, (1:2));
+               fPlateDimensions = PlateTypes.MaestroElectrodeMap(offset + 1, (1:2));
             elseif (bitand(aPlateType, PlateTypes.EDGE_MASK) == PlateTypes.EDGE_MASK)
-               fPlateDimentions = PlateTypes.EdgeElectrodeMap(offset + 1, (1:2));
+               fPlateDimensions = PlateTypes.EdgeElectrodeMap(offset + 1, (1:2));
             elseif (bitand(aPlateType, PlateTypes.CREATOR_MASK) == PlateTypes.CREATOR_MASK)
-               fPlateDimentions = PlateTypes.CreatorElectrodeMap(offset + 1, (1:2));
+                % special handling for CreatorKit plates
+                offset = PlateTypes.GetChipOffsetForChimera(aPlateType);
+                fPlateDimensions = PlateTypes.CreatorElectrodeMap(offset, (1:2));
             else
                 warning('File has an unknown plate type. These Matlab Scripts may be out of date.');
-                fPlateDimentions = [];
+                fPlateDimensions = [];
             end
         end
 
-        function fElectrodeDimentions = GetElectrodeDimensions(aPlateType)
+        function fElectrodeDimensions = GetElectrodeDimensions(aPlateType)
             % GetElectrodeDimensions returns a 4-element array of plate
             % dimensions (wells and electrodes within wells).
             %
@@ -218,21 +300,22 @@ classdef PlateTypes
             % are many locations in the mapping with no electodes:
             % 11, 15, 61, 63, 65, b1, b5
             %
-            PlateIDMask = 65535;
-            offset = bitand(aPlateType, PlateIDMask);
+            offset = bitand(aPlateType, PlateTypes.PLATE_ID_MASK);
             if(aPlateType == PlateTypes.Empty)
-                fElectrodeDimentions = [];
+                fElectrodeDimensions = [];
             elseif (bitand(aPlateType, PlateTypes.MUSE_MASK) == PlateTypes.MUSE_MASK)
-               fElectrodeDimentions = PlateTypes.MuseElectrodeMap(offset + 1, :);
+               fElectrodeDimensions = PlateTypes.MuseElectrodeMap(offset + 1, :);
             elseif (bitand(aPlateType, PlateTypes.MAESTRO_MASK) == PlateTypes.MAESTRO_MASK)
-               fElectrodeDimentions = PlateTypes.MaestroElectrodeMap(offset + 1, :);
+               fElectrodeDimensions = PlateTypes.MaestroElectrodeMap(offset + 1, :);
             elseif (bitand(aPlateType, PlateTypes.EDGE_MASK) == PlateTypes.EDGE_MASK)
-               fElectrodeDimentions = PlateTypes.EdgeElectrodeMap(offset + 1, :);
+               fElectrodeDimensions = PlateTypes.EdgeElectrodeMap(offset + 1, :);
             elseif (bitand(aPlateType, PlateTypes.CREATOR_MASK) == PlateTypes.CREATOR_MASK)
-               fElectrodeDimentions = PlateTypes.CreatorElectrodeMap(offset + 1, :);
+                % special handling for CreatorKit plates
+                offset = PlateTypes.GetChipOffsetForChimera(aPlateType);
+                fElectrodeDimensions = PlateTypes.CreatorElectrodeMap(offset, :);
             else
                 warning('File has an unknown plate type. These Matlab Scripts may be out of date.');
-                fElectrodeDimentions = [];
+                fElectrodeDimensions = [];
             end
         end
     end

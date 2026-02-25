@@ -11,7 +11,7 @@ classdef StimulationWaveform < Tag
     end
 
     properties(SetAccess = private)
-        TagBlocks = StimulationEventData.empty(0);
+        TagBlocks = axion_empty('StimulationEventData', 0);
         MicroOps;
     end
 
@@ -62,4 +62,3 @@ classdef StimulationWaveform < Tag
     end
 
 end
-

@@ -44,7 +44,7 @@ classdef LedPosition
 
                 this.WellColumn      = fread(aFileID, 1, 'uint8=>uint8');
                 this.WellRow         = fread(aFileID, 1, 'uint8=>uint8');
-                this.LedColor        = LedColor(fread(aFileID, 1, 'uint16=>uint16'));
+                this.LedColor        = uint16(fread(aFileID, 1, 'uint16=>uint16'));
 
             elseif (fNArgIn == 3)
                 % Construct a new Channel Mapping from Scratch
@@ -73,4 +73,3 @@ classdef LedPosition
         end
     end
 end
-

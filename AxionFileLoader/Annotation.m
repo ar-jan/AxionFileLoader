@@ -10,7 +10,18 @@ classdef Annotation < EventTag
     end
 
     methods
-        function this = Annotation(aFileID, aRawTag)
+        function this = Annotation(varargin)
+            if nargin == 0
+                this = this@EventTag();
+                this.NoteText = [];
+                return;
+            elseif nargin == 2
+                aFileID = varargin{1};
+                aRawTag = varargin{2};
+            else
+                error('Annotation: Argument Error');
+            end
+
             this = this@EventTag(aFileID, aRawTag);
 
             %Assume EventTag constructor leaves us at the right place
@@ -36,4 +47,3 @@ classdef Annotation < EventTag
     end
 
 end
-

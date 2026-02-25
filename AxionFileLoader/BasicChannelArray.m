@@ -52,7 +52,7 @@ classdef BasicChannelArray < handle
 
                 fNumChannels = fread(fFileId, 1, 'uint32=>uint32');
 
-                this.Channels = ChannelMapping.empty(0, fNumChannels);
+                this.Channels = axion_empty('ChannelMapping', 0, fNumChannels);
 
                 fIndices = int32(1:fNumChannels);
                 for i = fIndices

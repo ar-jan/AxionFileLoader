@@ -29,21 +29,34 @@ classdef Tag < handle  & matlab.mixin.Heterogeneous & matlab.mixin.CustomDisplay
    end
 
    methods
-      function this = Tag(aGuid)
+      function this = Tag(varargin)
          this = this@handle();
          this@matlab.mixin.Heterogeneous();
          this@matlab.mixin.CustomDisplay();
 
+         if nargin == 0
+            aGuid = '';
+         elseif nargin == 1
+            aGuid = varargin{1};
+         else
+            error('Tag: Argument Error');
+         end
+
          this.TagGuid = aGuid;
          this.HeadRevisionNumber = -1;
-         this.EntryNodes = TagEntry.empty(0,1);
+         this.EntryNodes = axion_empty('TagEntry', 0, 1);
       end
 
       function new = Promote(this, aFileId)
          %%% Promote:
          % Converts a base tag to the type that is dictated by its Type
          % property. Note that the returned object is a new instance
-         [~,idx] = sort(arrayfun(@(a)(a.RevisionNumber), this.EntryNodes));
+         fNumEntries = length(this.EntryNodes);
+         fRevisions = zeros(1, fNumEntries);
+         for i = 1:fNumEntries
+            fRevisions(i) = double(this.EntryNodes(i).RevisionNumber);
+         end
+         [~,idx] = sort(fRevisions);
          fEntryNodes = this.EntryNodes(idx);
          fHead = fEntryNodes(end);
 
@@ -96,12 +109,20 @@ classdef Tag < handle  & matlab.mixin.Heterogeneous & matlab.mixin.CustomDisplay
       function AddNode(this, aNode)
          %%% AddNode
          % Adds a TagEntry to the revision history of this Tag series
-         this.EntryNodes = [this.EntryNodes; aNode];
+         if isempty(this.EntryNodes)
+            this.EntryNodes = aNode;
+         else
+            this.EntryNodes(end + 1, 1) = aNode;
+         end
          %sort by revison number
-         [this.HeadRevisionNumber, idx] = max(arrayfun(@(a)(a.RevisionNumber), this.EntryNodes));
+         fNumEntries = length(this.EntryNodes);
+         fRevisions = zeros(1, fNumEntries);
+         for i = 1:fNumEntries
+            fRevisions(i) = double(this.EntryNodes(i).RevisionNumber);
+         end
+         [this.HeadRevisionNumber, idx] = max(fRevisions);
          this.Type = this.EntryNodes(idx).Type;
       end
    end
 
 end
-

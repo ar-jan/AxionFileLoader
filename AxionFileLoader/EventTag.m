@@ -23,7 +23,21 @@ classdef EventTag < Tag
     end
 
     methods (Access = protected)
-        function this = EventTag(aFileID, aRawTag)
+        function this = EventTag(varargin)
+            if nargin == 0
+                this = this@Tag();
+                this.SamplingFrequency = [];
+                this.EventTimeSample = [];
+                this.EventTime = [];
+                this.EventDurationSamples = [];
+                return;
+            elseif nargin == 2
+                aFileID = varargin{1};
+                aRawTag = varargin{2};
+            else
+                error('EventTag: Argument Error');
+            end
+
             this = this@Tag(aRawTag.TagGuid);
 
             fStart = aRawTag.Start + TagEntry.BaseSize;
@@ -42,4 +56,3 @@ classdef EventTag < Tag
     end
 
 end
-

@@ -3,7 +3,7 @@
     Contact: support@axion-biosystems.com
     All Rights Reserved
 %}
-classdef BlockVectorDataType < uint16
+classdef BlockVectorDataType
     %BLOCKVECTORDATATYPE Enumeration of known types of block vector data.
     %
     %   Raw_v1:     Continuous data from an Axion Muse or Maestro device.
@@ -14,28 +14,25 @@ classdef BlockVectorDataType < uint16
     %   an associated channel and name
     %
 
-    enumeration
-        Raw_v1(0)
-        Spike_v1(1)
-        NamedContinuousData(2)
+    properties (Constant = true)
+        Raw_v1 = uint16(0);
+        Spike_v1 = uint16(1);
+        NamedContinuousData = uint16(2);
     end
 
     methods(Static)
         function [value , success] = TryParse(aInput)
-            try
-                value = BlockVectorDataType(aInput);
-                success = true;
-            catch e
-
-                warning(...
-                    'BlockVectorDataType:TryParse',  ...
-                    ['Unsupported BlockVectorDataType', e]);
-
-                value = aInput;
-                success = false;
+            value = uint16(aInput);
+            known = [
+                BlockVectorDataType.Raw_v1, ...
+                BlockVectorDataType.Spike_v1, ...
+                BlockVectorDataType.NamedContinuousData ...
+            ];
+            success = any(value == known);
+            if ~success
+                warning('BlockVectorDataType:TryParse', 'Unsupported BlockVectorDataType: %d', value);
             end
         end
     end
 
 end
-

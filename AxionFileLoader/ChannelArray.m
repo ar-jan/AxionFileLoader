@@ -112,7 +112,7 @@ classdef ChannelArray < Entry
             fChannelMapping          = LegacySupport.P200D30S_CHANNEL_MAPPING;
             fPlateType  = LegacySupport.P200D30S_PLATE_TYPE;
 
-            fChannels = ChannelMapping.empty(0,(length(fChannelMapping)));
+            fChannels = axion_empty('ChannelMapping', 0, (length(fChannelMapping)));
 
             for fiCol = 1:size(fChannelMapping, 1)
                 for fiRow = 1:size(fChannelMapping, 2)

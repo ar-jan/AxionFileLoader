@@ -181,7 +181,7 @@ classdef AxisFile < handle & matlab.mixin.CustomDisplay
             this.MetaData = containers.Map('KeyType', 'char', 'ValueType', 'char');
 
             fSetMap = containers.Map('KeyType', 'int64', 'ValueType', 'any');
-            fNotes = Note.empty(0,0);
+            fNotes = axion_empty('Note', 0, 0);
 
             if (this.FileID <= 0)
                 error(['AxisFile: ' this.FileName ' not found.']);
@@ -269,13 +269,14 @@ classdef AxisFile < handle & matlab.mixin.CustomDisplay
 
             fTerminated = false;
 
-            fTagEntries = TagEntry.empty(0);
+            fTagEntries = axion_empty('TagEntry', 0);
 
             this.ChannelArray = [];
 
             % Load file entries from the header
             while(~fTerminated)
-                for entryRecord = fEntryRecords
+                for entryRecordIndex = 1:length(fEntryRecords)
+                    entryRecord = fEntryRecords(entryRecordIndex);
                     switch(entryRecord.Type)
 
                         case EntryRecordID.Terminate
@@ -323,7 +324,13 @@ classdef AxisFile < handle & matlab.mixin.CustomDisplay
                             fSetMap(fData.Start) = fTargetSet;
 
                         case EntryRecordID.NotesArray
-                            fNotes = [fNotes ; Note.ParseArray(entryRecord, this.FileID)];
+                            fParsedNotes = Note.ParseArray(entryRecord, this.FileID);
+                            if isempty(fNotes)
+                                fNotes = fParsedNotes(:);
+                            elseif ~isempty(fParsedNotes)
+                                fCount = numel(fParsedNotes);
+                                fNotes(end + (1:fCount), 1) = fParsedNotes(:);
+                            end
 
                         case EntryRecordID.Tag
                             fTagEntries(end+1) = TagEntry(entryRecord, this.FileID);
@@ -392,14 +399,33 @@ classdef AxisFile < handle & matlab.mixin.CustomDisplay
             fValueSet = fSetMap.values;
 
             %Record Final Data Sets
-            this.DataSets = DataSet.empty(0,length(fSetMap));
+            this.DataSets = cell(1, length(fSetMap));
             for i = 1 : length(fValueSet)
-                this.DataSets(i) = DataSet.Construct(fValueSet{i});
+                this.DataSets{i} = DataSet.Construct(fValueSet{i});
             end
 
             %Sort Notes
             [~,idx]=sort([fNotes.Revision]);
             fNotes = fNotes(idx);
+
+            % Octave path: skip tag promotion (MATLAB mixin-heavy) and keep
+            % notes metadata only. This is sufficient for spike extraction.
+            if exist('OCTAVE_VERSION', 'builtin') == 5
+                this.Annotations = axion_empty('Annotation', 0);
+                this.PlateMap = axion_empty('WellInformation', 0);
+                this.StimulationEvents = axion_empty('StimulationEvent', 0);
+                this.UnlinkedStimulationEvents = axion_empty('StimulationEvent', 0);
+                this.LeapInduction = axion_empty('LeapInductionEvent', 0);
+                this.ViabilityImpedanceEvents = axion_empty('ViabilityImpedanceEvent', 0);
+
+                if(this.MetaData.length == 0 && ~isempty(fNotes))
+                    fNewestNote = fNotes(end);
+                    this.MetaData(AxisFile.mcRecordingNameKey) = fNewestNote.RecordingName;
+                    this.MetaData(AxisFile.mcInvestigatorKey) = fNewestNote.Investigator;
+                    this.MetaData(AxisFile.mcDescriptionKey) = fNewestNote.Description;
+                end
+                return;
+            end
 
             %Collect Tags
             fTagMap = containers.Map();
@@ -414,11 +440,11 @@ classdef AxisFile < handle & matlab.mixin.CustomDisplay
                 end
                 fTag.AddNode(fEntry);
             end
-            this.Annotations = Annotation.empty(0);
-            this.PlateMap = WellInformation.empty(0);
-            this.StimulationEvents = StimulationEvent.empty(0);
-            this.LeapInduction = LeapInductionEvent.empty(0);
-            this.ViabilityImpedanceEvents = ViabilityImpedanceEvent.empty(0);
+            this.Annotations = axion_empty('Annotation', 0);
+            this.PlateMap = axion_empty('WellInformation', 0);
+            this.StimulationEvents = axion_empty('StimulationEvent', 0);
+            this.LeapInduction = axion_empty('LeapInductionEvent', 0);
+            this.ViabilityImpedanceEvents = axion_empty('ViabilityImpedanceEvent', 0);
 
             for fKey = fTagMap.keys
                 ffKey = fKey{1};
@@ -441,41 +467,52 @@ classdef AxisFile < handle & matlab.mixin.CustomDisplay
 
             %Upgrade notes to the string diconarty feilds, if needed
             if(this.MetaData.length == 0 && ~isempty(fNotes))
-                this.MetaData(AxisFile.mcRecordingNameKey) = fNotes.RecordingName;
-                this.MetaData(AxisFile.mcInvestigatorKey) = fNotes.Investigator;
-                this.MetaData(AxisFile.mcDescriptionKey) = fNotes.Description;
+                fNewestNote = fNotes(end);
+                this.MetaData(AxisFile.mcRecordingNameKey) = fNewestNote.RecordingName;
+                this.MetaData(AxisFile.mcInvestigatorKey) = fNewestNote.Investigator;
+                this.MetaData(AxisFile.mcDescriptionKey) = fNewestNote.Description;
             end
 
-            if(isvector(this.StimulationEvents))
-                fValid = this.StimulationEvents.HasValidTags();
-                this.UnlinkedStimulationEvents = this.StimulationEvents(~fValid);
-                this.StimulationEvents = this.StimulationEvents(fValid);
-            elseif(~this.StimulationEvents.HasValidTags())
-                this.UnlinkedStimulationEvents = this.StimulationEvents;
-                this.StimulationEvents = [];
+            if ~isempty(this.StimulationEvents)
+                fLinkedStimEvents = axion_empty('StimulationEvent', 0);
+                fUnlinkedStimEvents = axion_empty('StimulationEvent', 0);
+                for i = 1:length(this.StimulationEvents)
+                    fCurrentStimEvent = this.StimulationEvents(i);
+                    if fCurrentStimEvent.HasValidTags()
+                        if isempty(fLinkedStimEvents)
+                            fLinkedStimEvents = fCurrentStimEvent;
+                        else
+                            fLinkedStimEvents(end + 1) = fCurrentStimEvent;
+                        end
+                    else
+                        if isempty(fUnlinkedStimEvents)
+                            fUnlinkedStimEvents = fCurrentStimEvent;
+                        else
+                            fUnlinkedStimEvents(end + 1) = fCurrentStimEvent;
+                        end
+                    end
+                end
+                this.StimulationEvents = fLinkedStimEvents;
+                this.UnlinkedStimulationEvents = fUnlinkedStimEvents;
             end
             
             if(~isempty(this.UnlinkedStimulationEvents))
                 warning('%i Stimulation events were missing metadata', length(this.UnlinkedStimulationEvents))
             end
             
-            for fStimEvent = this.StimulationEvents
-                fStimEvent.Link(fTagMap);
+            for i = 1:length(this.StimulationEvents)
+                this.StimulationEvents(i).Link(fTagMap);
             end
 
-            this.Annotations = this.Annotations';
-            this.PlateMap = this.PlateMap';
-            this.StimulationEvents = this.StimulationEvents';
-            this.UnlinkedStimulationEvents = this.UnlinkedStimulationEvents';
+            % Octave classdef objects do not implement ctranspose by default.
+            % Keep object arrays in their current orientation.
              %There Should only be LeapInduction tag, we follow the same practice as AxIS to limit it to 1,
              %We use the tage with the most recent CreationDate, which shoudl be the youngest tag...
-            this.LeapInduction = this.LeapInduction';
             if(length(this.LeapInduction) > 1)
                 dates = arrayfun(@(a)(a.CreationDate.ToDateTimeNumber), this.LeapInduction);
                 [~,maxind] = max(dates);
                 this.LeapInduction = this.LeapInduction(maxind);
             end
-            this.ViabilityImpedanceEvents = this.ViabilityImpedanceEvents';
         end
 
         function delete(this)
@@ -553,39 +590,111 @@ classdef AxisFile < handle & matlab.mixin.CustomDisplay
     % Data Look-up
     methods
         function dataSet = RawVoltageData(this)
-            fSearch = arrayfun(@(a)(a.IsRawVoltage()), this.DataSets, 'UniformOutput', false);
-            fSearch = [fSearch{:}];
-            dataSet = this.DataSets(fSearch);
+            if iscell(this.DataSets)
+                fSearch = cellfun(@(a)(a.IsRawVoltage()), this.DataSets);
+                fMatches = this.DataSets(fSearch);
+                if isempty(fMatches)
+                    dataSet = [];
+                elseif numel(fMatches) == 1
+                    dataSet = fMatches{1};
+                else
+                    dataSet = [fMatches{:}];
+                end
+            else
+                fSearch = arrayfun(@(a)(a.IsRawVoltage()), this.DataSets, 'UniformOutput', false);
+                fSearch = [fSearch{:}];
+                dataSet = this.DataSets(fSearch);
+            end
         end
         
         function dataSet = BroadbandHighFrequency(this)
-            fSearch = arrayfun(@(a)(a.IsBbpHigh()), this.DataSets, 'UniformOutput', false);
-            fSearch = [fSearch{:}];
-            dataSet = this.DataSets(fSearch);
+            if iscell(this.DataSets)
+                fSearch = cellfun(@(a)(a.IsBbpHigh()), this.DataSets);
+                fMatches = this.DataSets(fSearch);
+                if isempty(fMatches)
+                    dataSet = [];
+                elseif numel(fMatches) == 1
+                    dataSet = fMatches{1};
+                else
+                    dataSet = [fMatches{:}];
+                end
+            else
+                fSearch = arrayfun(@(a)(a.IsBbpHigh()), this.DataSets, 'UniformOutput', false);
+                fSearch = [fSearch{:}];
+                dataSet = this.DataSets(fSearch);
+            end
         end
 
         function dataSet = BroadbandLowFrequency(this)
-            fSearch = arrayfun(@(a)(a.IsBbpLow()), this.DataSets, 'UniformOutput', false);
-            fSearch = [fSearch{:}];
-            dataSet = this.DataSets(fSearch);
+            if iscell(this.DataSets)
+                fSearch = cellfun(@(a)(a.IsBbpLow()), this.DataSets);
+                fMatches = this.DataSets(fSearch);
+                if isempty(fMatches)
+                    dataSet = [];
+                elseif numel(fMatches) == 1
+                    dataSet = fMatches{1};
+                else
+                    dataSet = [fMatches{:}];
+                end
+            else
+                fSearch = arrayfun(@(a)(a.IsBbpLow()), this.DataSets, 'UniformOutput', false);
+                fSearch = [fSearch{:}];
+                dataSet = this.DataSets(fSearch);
+            end
         end
 
         function dataSet = RawContractilityData(this)
-            fSearch = arrayfun(@(a)(a.IsRawContractility()), this.DataSets, 'UniformOutput', false);
-            fSearch = [fSearch{:}];
-            dataSet = this.DataSets(fSearch);
+            if iscell(this.DataSets)
+                fSearch = cellfun(@(a)(a.IsRawContractility()), this.DataSets);
+                fMatches = this.DataSets(fSearch);
+                if isempty(fMatches)
+                    dataSet = [];
+                elseif numel(fMatches) == 1
+                    dataSet = fMatches{1};
+                else
+                    dataSet = [fMatches{:}];
+                end
+            else
+                fSearch = arrayfun(@(a)(a.IsRawContractility()), this.DataSets, 'UniformOutput', false);
+                fSearch = [fSearch{:}];
+                dataSet = this.DataSets(fSearch);
+            end
         end
 
         function dataSet = SpikeData(this)
-            fSearch = arrayfun(@(a)(a.IsSpikes()), this.DataSets, 'UniformOutput', false);
-            fSearch = [fSearch{:}];
-            dataSet = this.DataSets(fSearch);
+            if iscell(this.DataSets)
+                fSearch = cellfun(@(a)(a.IsSpikes()), this.DataSets);
+                fMatches = this.DataSets(fSearch);
+                if isempty(fMatches)
+                    dataSet = [];
+                elseif numel(fMatches) == 1
+                    dataSet = fMatches{1};
+                else
+                    dataSet = [fMatches{:}];
+                end
+            else
+                fSearch = arrayfun(@(a)(a.IsSpikes()), this.DataSets, 'UniformOutput', false);
+                fSearch = [fSearch{:}];
+                dataSet = this.DataSets(fSearch);
+            end
         end
         
         function dataSet = LfpData(this)
-            fSearch = arrayfun(@(a)(a.IsLfp()), this.DataSets, 'UniformOutput', false);
-            fSearch = [fSearch{:}];
-            dataSet = this.DataSets(fSearch);
+            if iscell(this.DataSets)
+                fSearch = cellfun(@(a)(a.IsLfp()), this.DataSets);
+                fMatches = this.DataSets(fSearch);
+                if isempty(fMatches)
+                    dataSet = [];
+                elseif numel(fMatches) == 1
+                    dataSet = fMatches{1};
+                else
+                    dataSet = [fMatches{:}];
+                end
+            else
+                fSearch = arrayfun(@(a)(a.IsLfp()), this.DataSets, 'UniformOutput', false);
+                fSearch = [fSearch{:}];
+                dataSet = this.DataSets(fSearch);
+            end
         end
     end
 
@@ -626,6 +735,3 @@ classdef AxisFile < handle & matlab.mixin.CustomDisplay
         end
     end
 end
-
-
-

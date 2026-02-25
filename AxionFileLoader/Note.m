@@ -41,12 +41,23 @@ classdef Note < Entry
     end
 
     methods
-        function this = Note(aEntryRecord, aFileID)
-            this = this@Entry(aEntryRecord, int64(ftell(aFileID)));
-
-            if(nargin == 0)
-                return
+        function this = Note(varargin)
+            if nargin == 0
+                this = this@Entry();
+                this.Investigator = [];
+                this.RecordingName = [];
+                this.Description = [];
+                this.Revision = [];
+                this.RevisionDate = [];
+                return;
+            elseif nargin == 2
+                aEntryRecord = varargin{1};
+                aFileID = varargin{2};
+            else
+                error('Note: Argument Error');
             end
+
+            this = this@Entry(aEntryRecord, int64(ftell(aFileID)));
 
             this.Investigator = deblank(fread(aFileID, Note.InvestigatorLength, '*char').');
             % strip '\r' characters so that lines aren't double-spaced
@@ -76,7 +87,7 @@ classdef Note < Entry
     methods(Static = true)
         function array = ParseArray(aEntryRecord, aFileID)
             fCount = aEntryRecord.Length / Note.SIZE;
-            array = Note.empty(0,fCount);
+            array = axion_empty('Note', 0, fCount);
             for i = 1 : fCount
                 fEntryRecord = EntryRecord(EntryRecordID.NotesArray, Note.SIZE);
                 array(i) = Note(fEntryRecord, aFileID);

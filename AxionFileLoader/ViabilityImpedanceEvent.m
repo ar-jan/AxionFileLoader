@@ -27,7 +27,22 @@ classdef ViabilityImpedanceEvent < Tag & matlab.mixin.CustomDisplay
     end
     
     methods
-        function this = ViabilityImpedanceEvent(aFileID, aRawTag)
+        function this = ViabilityImpedanceEvent(varargin)
+            if nargin == 0
+                this = this@Tag();
+                this.MeasurementDateTime = [];
+                this.ChannelArray = [];
+                this.Frequencies = [];
+                this.ImpedanceValues = [];
+                this.mCreationDate = [];
+                return;
+            elseif nargin == 2
+                aFileID = varargin{1};
+                aRawTag = varargin{2};
+            else
+                error('ViabilityImpedanceEvent: Argument Error');
+            end
+
             this = this@Tag(aRawTag.TagGuid);
             this.mCreationDate = aRawTag.CreationDate;
             fStart = aRawTag.Start + TagEntry.BaseSize;

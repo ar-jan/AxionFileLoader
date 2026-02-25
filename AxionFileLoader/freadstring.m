@@ -12,7 +12,11 @@ function FileString = freadstring( aFileID )
     fBytes = fread(aFileID, 1, 'int32=>int32');
     fBytes = fread(aFileID, double(fBytes), 'uint8=>uint8');
     fBytes = fBytes';
-    FileString = native2unicode(fBytes, 'UTF-8');
+    if exist('native2unicode', 'file') == 2 || exist('native2unicode', 'builtin') == 5
+        FileString = native2unicode(fBytes, 'UTF-8');
+    else
+        % Octave fallback on systems without native2unicode.m.
+        FileString = char(fBytes);
+    end
 
 end
-

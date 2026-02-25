@@ -43,7 +43,29 @@ classdef WellInformation < Tag
     end
 
     methods
-        function this = WellInformation(aFileID, aRawTag)
+        function this = WellInformation(varargin)
+            if nargin == 0
+                this = this@Tag();
+                this.WellColumn = [];
+                this.WellRow = [];
+                this.IsOn = [];
+                this.IsControl = [];
+                this.Red = [];
+                this.Green = [];
+                this.Blue = [];
+                this.TreatmentWhat = [];
+                this.AdditionalInformation = [];
+                this.TreatmentHowMuchBaseValue = [];
+                this.TreatmentHowMuchUnitExponent = [];
+                this.TreatmentHowMuchBaseUnit = [];
+                return;
+            elseif nargin == 2
+                aFileID = varargin{1};
+                aRawTag = varargin{2};
+            else
+                error('WellInformation: Argument Error');
+            end
+
             this = this@Tag(aRawTag.TagGuid);
 
             %Move to the correct location in the file
@@ -121,4 +143,3 @@ classdef WellInformation < Tag
         end
     end
 end
-

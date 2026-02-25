@@ -25,7 +25,7 @@ classdef EntryRecord
     methods
         function this = EntryRecord(aType, aLength)
             if nargin > 0
-                this.Type = EntryRecordID(aType);
+                this.Type = uint8(aType);
                 if(isinf(aLength) == 1)
                     this.Length = inf;
                 else
@@ -50,7 +50,7 @@ classdef EntryRecord
             % the end of the file. These entrist have a length feild == inf
             % when deserialized
             %
-            this = EntryRecord.empty(0, length(aValues));
+            this = axion_empty('EntryRecord', 0, length(aValues));
 
             if(~isa(aValues, 'uint64'))
                 error('EntryRecord.FromUint64: aValues must be of type uint64)');
@@ -94,4 +94,3 @@ classdef EntryRecord
         end
     end
 end
-

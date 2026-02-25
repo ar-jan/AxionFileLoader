@@ -27,7 +27,22 @@ classdef LeapInductionEvent < Tag & matlab.mixin.CustomDisplay
     end
 
     methods
-        function this = LeapInductionEvent(aFileID, aRawTag)
+        function this = LeapInductionEvent(varargin)
+            if nargin == 0
+                this = this@Tag();
+                this.LeapInductionStartTime = [];
+                this.LeapInductionDuration = [];
+                this.PlateType = [];
+                this.LeapedChannels = [];
+                this.mCreationDate = [];
+                return;
+            elseif nargin == 2
+                aFileID = varargin{1};
+                aRawTag = varargin{2};
+            else
+                error('LeapInductionEvent: Argument Error');
+            end
+
             this = this@Tag(aRawTag.TagGuid);
             this.mCreationDate = aRawTag.CreationDate;
             fStart = aRawTag.Start + TagEntry.BaseSize;
@@ -74,4 +89,3 @@ classdef LeapInductionEvent < Tag & matlab.mixin.CustomDisplay
         end
     end
 end
-

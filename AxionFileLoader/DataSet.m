@@ -356,21 +356,9 @@ classdef DataSet < handle & matlab.mixin.Heterogeneous & matlab.mixin.CustomDisp
             if strcmp(aTargetElectrodes, 'all')
                 % User has requested all electrodes - figure out what those
                 % are from the channel array
-                
-                if PlateTypes.IsChimera(aChannelArray.PlateType)
-                    fTargetElectrodes = DataSet.all_chimera_electrodes(aChannelArray);
-                else
-                    switch aChannelArray.PlateType
-                    case {PlateTypes.NinetySixWell, PlateTypes.NinetySixWellCircuit, ...
-                          PlateTypes.NinetySixWellTransparent, PlateTypes.NinetySixWellLumos,  ...
-                          PlateTypes.Reserved02}
-                        fTargetElectrodes = DataSet.all_8electrodes();
-                    otherwise
-                        fTargetElectrodes = DataSet.all_wells_electrodes(...
-                            [aChannelArray.Channels.ElectrodeColumn], ...
-                            [aChannelArray.Channels.ElectrodeRow]);
-                    end
-                end
+                fTargetElectrodes = DataSet.all_wells_electrodes(...
+                    [aChannelArray.Channels.ElectrodeColumn], ...
+                    [aChannelArray.Channels.ElectrodeRow]);
 
             elseif strcmp(aTargetElectrodes, 'none')
                 % User has requested no electrodes
@@ -425,8 +413,8 @@ classdef DataSet < handle & matlab.mixin.Heterogeneous & matlab.mixin.CustomDisp
 
         % Subfunction to expand an 'all' well or electrode list
         function fOutput = all_wells_electrodes(aColumns, aRows)
-            aColumns = unique(aColumns); % sort ascending and dedup
-            aRows    = unique(aRows);
+            aColumns = axion_unique(aColumns); % sort ascending and dedup
+            aRows    = axion_unique(aRows);
 
             fNumRows = length(aRows);
             fNumCols = length(aColumns);

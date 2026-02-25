@@ -24,7 +24,24 @@ classdef StimulationEvent < EventTag
     end
 
     methods
-        function this = StimulationEvent(aFileID, aRawTag)
+        function this = StimulationEvent(varargin)
+            if nargin == 0
+                this = this@EventTag();
+                this.SequenceNumber = [];
+                this.WaveformTag = [];
+                this.ChannelsTag = [];
+                this.PlateType = [];
+                this.Electrodes = [];
+                this.Leds = [];
+                this.EventData = [];
+                return;
+            elseif nargin == 2
+                aFileID = varargin{1};
+                aRawTag = varargin{2};
+            else
+                error('StimulationEvent: Argument Error');
+            end
+
             this = this@EventTag(aFileID, aRawTag);
             %Assume EventTag leaves us at the correct location in the file
 
@@ -92,7 +109,7 @@ classdef StimulationEvent < EventTag
                     @(aChanId)(fChannels(find(arrayfun(@(a)(a.ID) == aChanId, fChannels),1))),...
                     this.EventData.ChannelArrayIdList);
 
-                this.PlateType = unique(arrayfun(@(a)(a.PlateType), this.Electrodes));
+                this.PlateType = axion_unique(arrayfun(@(a)(a.PlateType), this.Electrodes));
                 this.Electrodes = arrayfun(@(a)(a.Mappings), this.Electrodes, 'UniformOutput', false);
 
                 if length(this.Electrodes) == 1
@@ -121,4 +138,3 @@ classdef StimulationEvent < EventTag
         end
     end
 end
-

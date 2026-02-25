@@ -62,7 +62,7 @@ classdef CRC32 < handle
         function createTable = InitializeTable(aPolynomial)
 
             polynomial = cast(aPolynomial, 'uint32');
-            createTable = cast(zeros(256, 0), 'uint32');
+            createTable = cast(zeros(256, 1), 'uint32');
 
             for i = 0 : 255
                 entry = cast(i, 'uint32');
@@ -92,4 +92,3 @@ classdef CRC32 < handle
         end
     end
 end
-

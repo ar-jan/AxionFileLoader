@@ -3,7 +3,7 @@
     Contact: support@axion-biosystems.com
     All Rights Reserved
 %}
-classdef BlockVectorSampleType < uint16
+classdef BlockVectorSampleType
     %SampleType Encoding of the type of samples stored by a block vector
     %
     %   Short: Signed 16-bit numbers (little-endian)
@@ -15,31 +15,30 @@ classdef BlockVectorSampleType < uint16
     %   Double: 64-bit floating point numbers (IEEE 754)
     %
 
-    enumeration
-        Short(0)
-        Int(1)
-        Float(2)
-        Double(3)
+    properties (Constant = true)
+        Short = uint16(0);
+        Int = uint16(1);
+        Float = uint16(2);
+        Double = uint16(3);
     end
 
     methods(Static)
         function [value , success] = TryParse(aInput)
-            try
-                value = BlockVectorSampleType(aInput);
-                success = true;
-            catch e
-
-                warning(...
-                    'BlockVectorSampleType:TryParse',  ...
-                    ['Unsupported BlockVectorSampleType', e]);
-
-                value = aInput;
-                success = false;
+            value = uint16(aInput);
+            known = [
+                BlockVectorSampleType.Short, ...
+                BlockVectorSampleType.Int, ...
+                BlockVectorSampleType.Float, ...
+                BlockVectorSampleType.Double ...
+            ];
+            success = any(value == known);
+            if ~success
+                warning('BlockVectorSampleType:TryParse', 'Unsupported BlockVectorSampleType: %d', value);
             end
         end
 
         function value = GetSizeInBytes(aInput)
-            switch(aInput)
+            switch uint16(aInput)
                 case BlockVectorSampleType.Short
                     value = 2;
                 case BlockVectorSampleType.Int
@@ -54,7 +53,7 @@ classdef BlockVectorSampleType < uint16
         end
 
         function precision = GetFreadPrecision(aInput)
-            switch(aInput)
+            switch uint16(aInput)
                 case BlockVectorSampleType.Short
                     precision = 'int16=>int16';
                 case BlockVectorSampleType.Int
@@ -70,4 +69,3 @@ classdef BlockVectorSampleType < uint16
     end
 
 end
-

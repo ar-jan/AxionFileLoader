@@ -23,16 +23,28 @@ classdef StimulationEventData
     end
 
     methods
-        function this = StimulationEventData(...
-                aId, aStimDuration, aArtElimDuration,...
-                aChannelArrayIdList, aDescription)
-            this.ID = aId;
-            this.StimDuration = aStimDuration;
-            this.ArtifactEliminationDuration = aArtElimDuration;
-            this.ChannelArrayIdList = aChannelArrayIdList;
-            this.Description = aDescription;
+        function this = StimulationEventData(varargin)
+            if nargin == 0
+                this.ID = [];
+                this.StimDuration = [];
+                this.ArtifactEliminationDuration = [];
+                this.ChannelArrayIdList = [];
+                this.Description = [];
+            elseif nargin == 5
+                aId = varargin{1};
+                aStimDuration = varargin{2};
+                aArtElimDuration = varargin{3};
+                aChannelArrayIdList = varargin{4};
+                aDescription = varargin{5};
+                this.ID = aId;
+                this.StimDuration = aStimDuration;
+                this.ArtifactEliminationDuration = aArtElimDuration;
+                this.ChannelArrayIdList = aChannelArrayIdList;
+                this.Description = aDescription;
+            else
+                error('StimulationEventData: Argument Error');
+            end
         end
     end
 
 end
-

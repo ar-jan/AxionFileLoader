@@ -22,19 +22,30 @@ classdef TagEntry < Entry
     end
 
     methods
-        function this = TagEntry(aEntryRecord, aFileID)
+        function this = TagEntry(varargin)
+            if nargin == 0
+                this = this@Entry();
+                this.CreationDate = [];
+                this.TagGuid = '';
+                this.RevisionNumber = [];
+                this.Type = [];
+                return;
+            elseif nargin == 2
+                aEntryRecord = varargin{1};
+                aFileID = varargin{2};
+            else
+                error('TagEntry: Argument Error');
+            end
+
             this = this@Entry(aEntryRecord, int64(ftell(aFileID)));
 
             fTypeShort = fread(aFileID, 1, 'uint16=>uint16');
-            try
-               this.Type             = TagType(fTypeShort);
-            catch e
-                if(strcmp('MATLAB:class:InvalidEnum', e.identifier))
-                    warning('TagEntry:UnknonwTagType','Unknown tag type %i will be ignored', fTypeShort);
-                else
-                    e.throw;
-                end
-               this.Type             = TagType(TagType.Deleted);
+            [fTagType, fSuccess] = TagType.TryParse(fTypeShort);
+            if fSuccess
+                this.Type = fTagType;
+            else
+                warning('TagEntry:UnknonwTagType', 'Unknown tag type %i will be ignored', fTypeShort);
+                this.Type = TagType.Deleted;
             end
             this.CreationDate        = DateTime(aFileID);
             guidBytes                = fread(aFileID, 16, 'uint8=>uint8');
@@ -49,4 +60,3 @@ classdef TagEntry < Entry
     end
 
 end
-

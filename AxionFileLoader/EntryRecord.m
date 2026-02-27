@@ -25,6 +25,8 @@ classdef EntryRecord
     methods
         function this = EntryRecord(aType, aLength)
             if nargin > 0
+                % Store raw numeric type ID (uint8) so parsing works in
+                % Octave without enum class construction.
                 this.Type = uint8(aType);
                 if(isinf(aLength) == 1)
                     this.Length = inf;
@@ -50,6 +52,8 @@ classdef EntryRecord
             % the end of the file. These entrist have a length feild == inf
             % when deserialized
             %
+            % Use axion_empty() because EntryRecord.empty(...) is not
+            % reliable across Octave classdef array semantics.
             this = axion_empty('EntryRecord', 0, length(aValues));
 
             if(~isa(aValues, 'uint64'))

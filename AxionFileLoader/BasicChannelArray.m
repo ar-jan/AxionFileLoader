@@ -52,6 +52,8 @@ classdef BasicChannelArray < handle
 
                 fNumChannels = fread(fFileId, 1, 'uint32=>uint32');
 
+                % Use axion_empty() because ChannelMapping.empty(...)
+                % initialization patterns differ in Octave.
                 this.Channels = axion_empty('ChannelMapping', 0, fNumChannels);
 
                 fIndices = int32(1:fNumChannels);

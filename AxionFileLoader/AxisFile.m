@@ -181,6 +181,7 @@ classdef AxisFile < handle & matlab.mixin.CustomDisplay
             this.MetaData = containers.Map('KeyType', 'char', 'ValueType', 'char');
 
             fSetMap = containers.Map('KeyType', 'int64', 'ValueType', 'any');
+            % Use axion_empty() for Octave-safe typed object arrays.
             fNotes = axion_empty('Note', 0, 0);
 
             if (this.FileID <= 0)
@@ -269,12 +270,15 @@ classdef AxisFile < handle & matlab.mixin.CustomDisplay
 
             fTerminated = false;
 
+            % Use axion_empty() because TagEntry.empty(...) is fragile in Octave.
             fTagEntries = axion_empty('TagEntry', 0);
 
             this.ChannelArray = [];
 
             % Load file entries from the header
             while(~fTerminated)
+                % Iterate by index to avoid Octave issues with object-array
+                % loop variables ("for obj = objArray").
                 for entryRecordIndex = 1:length(fEntryRecords)
                     entryRecord = fEntryRecords(entryRecordIndex);
                     switch(entryRecord.Type)
@@ -328,6 +332,8 @@ classdef AxisFile < handle & matlab.mixin.CustomDisplay
                             if isempty(fNotes)
                                 fNotes = fParsedNotes(:);
                             elseif ~isempty(fParsedNotes)
+                                % Append by indexed assignment to keep
+                                % shape/type stable in Octave.
                                 fCount = numel(fParsedNotes);
                                 fNotes(end + (1:fCount), 1) = fParsedNotes(:);
                             end
@@ -399,6 +405,8 @@ classdef AxisFile < handle & matlab.mixin.CustomDisplay
             fValueSet = fSetMap.values;
 
             %Record Final Data Sets
+            % Store as cells first because Octave can be stricter about
+            % heterogeneous object array growth/concatenation.
             this.DataSets = cell(1, length(fSetMap));
             for i = 1 : length(fValueSet)
                 this.DataSets{i} = DataSet.Construct(fValueSet{i});
@@ -474,6 +482,8 @@ classdef AxisFile < handle & matlab.mixin.CustomDisplay
             end
 
             if ~isempty(this.StimulationEvents)
+                % Split linked/unlinked events with explicit appends instead
+                % of logical object indexing for Octave compatibility.
                 fLinkedStimEvents = axion_empty('StimulationEvent', 0);
                 fUnlinkedStimEvents = axion_empty('StimulationEvent', 0);
                 for i = 1:length(this.StimulationEvents)
@@ -591,6 +601,7 @@ classdef AxisFile < handle & matlab.mixin.CustomDisplay
     methods
         function dataSet = RawVoltageData(this)
             if iscell(this.DataSets)
+                % Octave path: DataSets are stored as cells.
                 fSearch = cellfun(@(a)(a.IsRawVoltage()), this.DataSets);
                 fMatches = this.DataSets(fSearch);
                 if isempty(fMatches)
@@ -609,6 +620,7 @@ classdef AxisFile < handle & matlab.mixin.CustomDisplay
         
         function dataSet = BroadbandHighFrequency(this)
             if iscell(this.DataSets)
+                % Octave path: DataSets are stored as cells.
                 fSearch = cellfun(@(a)(a.IsBbpHigh()), this.DataSets);
                 fMatches = this.DataSets(fSearch);
                 if isempty(fMatches)
@@ -627,6 +639,7 @@ classdef AxisFile < handle & matlab.mixin.CustomDisplay
 
         function dataSet = BroadbandLowFrequency(this)
             if iscell(this.DataSets)
+                % Octave path: DataSets are stored as cells.
                 fSearch = cellfun(@(a)(a.IsBbpLow()), this.DataSets);
                 fMatches = this.DataSets(fSearch);
                 if isempty(fMatches)
@@ -645,6 +658,7 @@ classdef AxisFile < handle & matlab.mixin.CustomDisplay
 
         function dataSet = RawContractilityData(this)
             if iscell(this.DataSets)
+                % Octave path: DataSets are stored as cells.
                 fSearch = cellfun(@(a)(a.IsRawContractility()), this.DataSets);
                 fMatches = this.DataSets(fSearch);
                 if isempty(fMatches)
@@ -663,6 +677,7 @@ classdef AxisFile < handle & matlab.mixin.CustomDisplay
 
         function dataSet = SpikeData(this)
             if iscell(this.DataSets)
+                % Octave path: DataSets are stored as cells.
                 fSearch = cellfun(@(a)(a.IsSpikes()), this.DataSets);
                 fMatches = this.DataSets(fSearch);
                 if isempty(fMatches)
@@ -681,6 +696,7 @@ classdef AxisFile < handle & matlab.mixin.CustomDisplay
         
         function dataSet = LfpData(this)
             if iscell(this.DataSets)
+                % Octave path: DataSets are stored as cells.
                 fSearch = cellfun(@(a)(a.IsLfp()), this.DataSets);
                 fMatches = this.DataSets(fSearch);
                 if isempty(fMatches)

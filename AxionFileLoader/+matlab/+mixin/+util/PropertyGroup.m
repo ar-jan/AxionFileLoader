@@ -1,4 +1,6 @@
 classdef (HandleCompatible) PropertyGroup < handle
+    % Minimal shim for Octave where matlab.mixin.util.PropertyGroup
+    % is unavailable; only PropertyList storage is required.
     properties
         PropertyList
     end

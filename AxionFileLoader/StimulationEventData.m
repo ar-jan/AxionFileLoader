@@ -25,6 +25,8 @@ classdef StimulationEventData
     methods
         function this = StimulationEventData(varargin)
             if nargin == 0
+                % Zero-arg constructor supports typed-empty initialization
+                % for Octave object array code paths.
                 this.ID = [];
                 this.StimDuration = [];
                 this.ArtifactEliminationDuration = [];

@@ -11,6 +11,8 @@ classdef StimulationWaveform < Tag
     end
 
     properties(SetAccess = private)
+        % Use axion_empty() because classdef empty constructors are not
+        % consistently supported in Octave object arrays.
         TagBlocks = axion_empty('StimulationEventData', 0);
         MicroOps;
     end

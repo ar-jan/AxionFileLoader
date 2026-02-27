@@ -356,6 +356,9 @@ classdef DataSet < handle & matlab.mixin.Heterogeneous & matlab.mixin.CustomDisp
             if strcmp(aTargetElectrodes, 'all')
                 % User has requested all electrodes - figure out what those
                 % are from the channel array
+                % Use recorded channel mappings directly instead of plate
+                % type branches; this is more robust for Octave paths and
+                % unknown/partial layouts.
                 fTargetElectrodes = DataSet.all_wells_electrodes(...
                     [aChannelArray.Channels.ElectrodeColumn], ...
                     [aChannelArray.Channels.ElectrodeRow]);
@@ -413,6 +416,8 @@ classdef DataSet < handle & matlab.mixin.Heterogeneous & matlab.mixin.CustomDisp
 
         % Subfunction to expand an 'all' well or electrode list
         function fOutput = all_wells_electrodes(aColumns, aRows)
+            % Use axion_unique() because unique() behavior differs on some
+            % Octave builds used for this project.
             aColumns = axion_unique(aColumns); % sort ascending and dedup
             aRows    = axion_unique(aRows);
 

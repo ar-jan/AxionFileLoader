@@ -5,6 +5,7 @@
 %}
 classdef TagType
     %TAGTYPE Enumeration of the types of tags that are known.
+    % NOTE: Implemented as constants (not MATLAB enums) for Octave.
 
     properties (Constant = true)
         %Deleted: Tag revision where this TagGUID has been deleted
@@ -62,6 +63,8 @@ classdef TagType
 
     methods (Static = true)
         function [value, success] = TryParse(aInput)
+            % Return known/unknown status explicitly since enum
+            % construction is not used in Octave mode.
             value = uint16(aInput);
             known = [ ...
                 TagType.Deleted, ...

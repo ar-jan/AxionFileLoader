@@ -29,6 +29,8 @@ classdef ViabilityImpedanceEvent < Tag & matlab.mixin.CustomDisplay
     methods
         function this = ViabilityImpedanceEvent(varargin)
             if nargin == 0
+                % Zero-arg constructor supports axion_empty() typed-empty
+                % arrays in Octave.
                 this = this@Tag();
                 this.MeasurementDateTime = [];
                 this.ChannelArray = [];

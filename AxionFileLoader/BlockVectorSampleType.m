@@ -5,6 +5,8 @@
 %}
 classdef BlockVectorSampleType
     %SampleType Encoding of the type of samples stored by a block vector
+    % NOTE: Implemented as constants (not MATLAB enums) to avoid enum
+    % inheritance limitations in Octave.
     %
     %   Short: Signed 16-bit numbers (little-endian)
     %
@@ -24,6 +26,7 @@ classdef BlockVectorSampleType
 
     methods(Static)
         function [value , success] = TryParse(aInput)
+            % Validate numeric IDs without enum construction.
             value = uint16(aInput);
             known = [
                 BlockVectorSampleType.Short, ...

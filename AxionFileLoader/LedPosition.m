@@ -44,6 +44,8 @@ classdef LedPosition
 
                 this.WellColumn      = fread(aFileID, 1, 'uint8=>uint8');
                 this.WellRow         = fread(aFileID, 1, 'uint8=>uint8');
+                % Store as uint16 explicitly because LedColor now uses
+                % constant numeric IDs (not enum construction).
                 this.LedColor        = uint16(fread(aFileID, 1, 'uint16=>uint16'));
 
             elseif (fNArgIn == 3)

@@ -5,6 +5,8 @@
 %}
 classdef LedColor
     %LEDCOLOR Color of a Stimulating LED
+    % NOTE: Implemented as constants to avoid MATLAB enum dependencies in
+    % Octave.
     properties (Constant = true)
         % None: Indicates that a color hasn't been assigned yet.
         None = uint16(0);
@@ -24,6 +26,7 @@ classdef LedColor
 
     methods (Static = true)
         function [value, success] = TryParse(aInput)
+            % Keep parse validation explicit without enum construction.
             value = uint16(aInput);
             known = [LedColor.None, LedColor.Blue, LedColor.Orange, LedColor.Green, LedColor.Red];
             success = any(value == known);

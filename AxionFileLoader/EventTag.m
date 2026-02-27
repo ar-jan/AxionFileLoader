@@ -25,6 +25,8 @@ classdef EventTag < Tag
     methods (Access = protected)
         function this = EventTag(varargin)
             if nargin == 0
+                % Zero-arg construction is used by axion_empty() to create
+                % typed empty arrays in Octave.
                 this = this@Tag();
                 this.SamplingFrequency = [];
                 this.EventTimeSample = [];

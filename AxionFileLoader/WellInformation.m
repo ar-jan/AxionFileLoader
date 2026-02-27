@@ -45,6 +45,8 @@ classdef WellInformation < Tag
     methods
         function this = WellInformation(varargin)
             if nargin == 0
+                % Zero-arg constructor supports axion_empty() typed-empty
+                % arrays in Octave.
                 this = this@Tag();
                 this.WellColumn = [];
                 this.WellRow = [];

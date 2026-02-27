@@ -62,6 +62,7 @@ classdef CRC32 < handle
         function createTable = InitializeTable(aPolynomial)
 
             polynomial = cast(aPolynomial, 'uint32');
+            % Preallocate 256x1 to avoid empty-column growth issues in Octave.
             createTable = cast(zeros(256, 1), 'uint32');
 
             for i = 0 : 255

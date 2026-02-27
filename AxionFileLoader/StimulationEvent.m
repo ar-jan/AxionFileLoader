@@ -26,6 +26,8 @@ classdef StimulationEvent < EventTag
     methods
         function this = StimulationEvent(varargin)
             if nargin == 0
+                % Zero-arg constructor supports axion_empty() typed-empty
+                % arrays in Octave.
                 this = this@EventTag();
                 this.SequenceNumber = [];
                 this.WaveformTag = [];
@@ -109,6 +111,8 @@ classdef StimulationEvent < EventTag
                     @(aChanId)(fChannels(find(arrayfun(@(a)(a.ID) == aChanId, fChannels),1))),...
                     this.EventData.ChannelArrayIdList);
 
+                % Use axion_unique() because unique() behavior on some
+                % Octave builds is inconsistent for this object-derived data.
                 this.PlateType = axion_unique(arrayfun(@(a)(a.PlateType), this.Electrodes));
                 this.Electrodes = arrayfun(@(a)(a.Mappings), this.Electrodes, 'UniformOutput', false);
 

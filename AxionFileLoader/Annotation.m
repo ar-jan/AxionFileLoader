@@ -12,6 +12,8 @@ classdef Annotation < EventTag
     methods
         function this = Annotation(varargin)
             if nargin == 0
+                % Allow axion_empty() to construct typed empty Annotation arrays
+                % in Octave without requiring file-backed constructor inputs.
                 this = this@EventTag();
                 this.NoteText = [];
                 return;

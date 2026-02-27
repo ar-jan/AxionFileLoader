@@ -5,6 +5,8 @@
 %}
 classdef BlockVectorDataType
     %BLOCKVECTORDATATYPE Enumeration of known types of block vector data.
+    % NOTE: Implemented as constants (not MATLAB enums) for Octave
+    % compatibility with numeric-backed enum references.
     %
     %   Raw_v1:     Continuous data from an Axion Muse or Maestro device.
     %
@@ -22,6 +24,8 @@ classdef BlockVectorDataType
 
     methods(Static)
         function [value , success] = TryParse(aInput)
+            % TryParse preserves "unknown value" handling without relying
+            % on enum constructor exceptions.
             value = uint16(aInput);
             known = [
                 BlockVectorDataType.Raw_v1, ...

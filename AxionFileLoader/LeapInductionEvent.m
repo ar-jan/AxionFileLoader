@@ -29,6 +29,8 @@ classdef LeapInductionEvent < Tag & matlab.mixin.CustomDisplay
     methods
         function this = LeapInductionEvent(varargin)
             if nargin == 0
+                % Zero-arg constructor supports axion_empty() typed-empty
+                % arrays in Octave.
                 this = this@Tag();
                 this.LeapInductionStartTime = [];
                 this.LeapInductionDuration = [];

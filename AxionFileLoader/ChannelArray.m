@@ -112,6 +112,7 @@ classdef ChannelArray < Entry
             fChannelMapping          = LegacySupport.P200D30S_CHANNEL_MAPPING;
             fPlateType  = LegacySupport.P200D30S_PLATE_TYPE;
 
+            % Use axion_empty() for Octave-safe typed object array setup.
             fChannels = axion_empty('ChannelMapping', 0, (length(fChannelMapping)));
 
             for fiCol = 1:size(fChannelMapping, 1)

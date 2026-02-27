@@ -43,6 +43,8 @@ classdef Note < Entry
     methods
         function this = Note(varargin)
             if nargin == 0
+                % Zero-arg constructor is required for axion_empty() typed
+                % object array initialization in Octave.
                 this = this@Entry();
                 this.Investigator = [];
                 this.RecordingName = [];
@@ -87,6 +89,8 @@ classdef Note < Entry
     methods(Static = true)
         function array = ParseArray(aEntryRecord, aFileID)
             fCount = aEntryRecord.Length / Note.SIZE;
+            % Use axion_empty() because Note.empty(...) shape handling
+            % differs between MATLAB and Octave.
             array = axion_empty('Note', 0, fCount);
             for i = 1 : fCount
                 fEntryRecord = EntryRecord(EntryRecordID.NotesArray, Note.SIZE);

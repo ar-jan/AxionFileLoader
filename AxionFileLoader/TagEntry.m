@@ -24,6 +24,8 @@ classdef TagEntry < Entry
     methods
         function this = TagEntry(varargin)
             if nargin == 0
+                % Zero-arg construction supports axion_empty() typed-empty
+                % arrays while still preserving property defaults.
                 this = this@Entry();
                 this.CreationDate = [];
                 this.TagGuid = '';
@@ -40,6 +42,8 @@ classdef TagEntry < Entry
             this = this@Entry(aEntryRecord, int64(ftell(aFileID)));
 
             fTypeShort = fread(aFileID, 1, 'uint16=>uint16');
+            % Parse against constant values because TagType is no longer a
+            % MATLAB enum class in Octave mode.
             [fTagType, fSuccess] = TagType.TryParse(fTypeShort);
             if fSuccess
                 this.Type = fTagType;

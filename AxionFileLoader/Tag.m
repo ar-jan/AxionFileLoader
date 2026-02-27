@@ -35,6 +35,7 @@ classdef Tag < handle  & matlab.mixin.Heterogeneous & matlab.mixin.CustomDisplay
          this@matlab.mixin.CustomDisplay();
 
          if nargin == 0
+            % Default GUID enables axion_empty() typed-empty construction.
             aGuid = '';
          elseif nargin == 1
             aGuid = varargin{1};
@@ -44,6 +45,8 @@ classdef Tag < handle  & matlab.mixin.Heterogeneous & matlab.mixin.CustomDisplay
 
          this.TagGuid = aGuid;
          this.HeadRevisionNumber = -1;
+         % Use axion_empty() because TagEntry.empty(...) is not reliable in
+         % Octave classdef object arrays.
          this.EntryNodes = axion_empty('TagEntry', 0, 1);
       end
 

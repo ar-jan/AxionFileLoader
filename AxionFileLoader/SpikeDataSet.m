@@ -43,6 +43,8 @@ classdef SpikeDataSet < DataSet
                 numSpikes > 0)
 
                 if exist('memmapfile', 'file') == 2 || exist('memmapfile', 'builtin') == 5
+                    % Use memmapfile when available for performance parity
+                    % with MATLAB.
                     if(reservedSpace == 0)
                         this.mMappedData = memmapfile(fileName,        ...
                             'Format', {                               ...
@@ -72,6 +74,8 @@ classdef SpikeDataSet < DataSet
                             'Writable', false);
                     end
                 else
+                    % Octave fallback: manually read spike blocks when
+                    % memmapfile is unavailable.
                     this.mMappedData = this.BuildMappedDataWithoutMemmap( ...
                         fileName, numSpikes, numSamples, reservedSpace);
                 end
@@ -175,6 +179,8 @@ classdef SpikeDataSet < DataSet
     methods (Access = private)
         function mappedData = BuildMappedDataWithoutMemmap( ...
                 this, fileName, numSpikes, numSamples, reservedSpace)
+            % Build a struct with the same field layout as memmapfile.Data
+            % so downstream code can stay unchanged.
             fileId = fopen(fileName, 'r');
             if fileId <= 0
                 error('SpikeDataSet:OpenFile', 'Could not open file: %s', fileName);
@@ -269,8 +275,12 @@ classdef SpikeDataSet < DataSet
             end
 
             try
+                % Prefer canonical plate dimensions when PlateTypes helpers
+                % are available.
                 fMaxExtents = PlateTypes.GetElectrodeDimensions(aSourceSet.ChannelArray.PlateType);
             catch
+                % Fall back to observed channel extents for Octave builds
+                % with incomplete PlateTypes behavior.
                 fMaxExtents = [];
             end
 

@@ -6,6 +6,8 @@
 classdef EntryRecordID
     %ENTRYRECORDID Values for entry record types used in headers /
     %   subheaders
+    % NOTE: This is implemented as constants (not MATLAB enums) so Octave
+    % can parse the file format without enum base-type support.
     %
     %   Terminate: Used to indicate the end of the record entries in
     %   headers/ subheaders.
@@ -39,6 +41,8 @@ classdef EntryRecordID
 
     methods(Static)
         function [value , success] = TryParse(aInput)
+            % Keep parsing tolerant by returning the raw numeric ID and a
+            % success flag, mirroring former enum-constructor validation.
             value = uint8(aInput);
             known = [ ...
                 EntryRecordID.Terminate, ...

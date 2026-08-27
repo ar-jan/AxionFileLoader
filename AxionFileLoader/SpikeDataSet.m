@@ -134,6 +134,11 @@ classdef SpikeDataSet < DataSet
         end
 
         function spikeRows = LoadAllSpikesDetailed(this)
+            % LoadAllSpikesDetailed is obsolete now that LoadAllSpikes() is used in
+            % extract_spk_with_axisfile_octave.m in
+            % github.com/UtrechtUniversity/mea-rasterplotter
+            % It was used to match iterating over the electrode data to get the
+            % amplitudes in the MATLAB version.
             % LoadAllSpikesDetailed returns per-spike timing and amplitudes.
             % This avoids waveform object construction paths that rely on
             % MATLAB-specific class behavior while preserving the expected
